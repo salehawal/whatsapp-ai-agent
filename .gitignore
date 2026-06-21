@@ -1,0 +1,21 @@
+# Node.js dependencies
+node_modules/
+.env
+
+# WhatsApp Session & Cache Directories
+.wa_auth/*
+!.wa_auth/.gitkeep
+
+.wwebjs_auth/*
+!.wwebjs_auth/.gitkeep
+
+.wwebjs_cache/*
+!.wwebjs_cache/.gitkeep
+
+# Custom Session Folder
+wa-session/*
+!wa-session/.gitkeep
+
+# Debug Screenshots
+debug-screenshots/*
+!debug-screenshots/.gitkeep

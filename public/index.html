@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp AI Bulk Sender</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      padding: 24px;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 {
+      text-align: center;
+      margin-bottom: 28px;
+      font-size: 1.6rem;
+      color: #075e54;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+      transition: background 0.3s;
+    }
+    .dot-gray { background: #999; }
+    .dot-green { background: #25D366; box-shadow: 0 0 6px rgba(37,211,102,0.5); }
+    .status-text { font-size: 0.85rem; color: #666; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-green {
+      background: #25D366;
+      color: #fff;
+    }
+    .btn-green:hover:not(:disabled) { background: #1da851; }
+    .btn-blue {
+      background: #128C7E;
+      color: #fff;
+    }
+    .btn-blue:hover:not(:disabled) { background: #0e7266; }
+    .btn-red {
+      background: #e74c3c;
+      color: #fff;
+    }
+    .btn-red:hover:not(:disabled) { background: #c0392b; }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #25D366;
+      color: #25D366;
+    }
+    .btn-outline:hover:not(:disabled) { background: #e8f8ee; }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    textarea, select, input[type="file"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    textarea:focus, select:focus { border-color: #25D366; outline: none; }
+    textarea { resize: vertical; min-height: 100px; }
+    .file-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .file-label input { display: none; }
+    .file-btn {
+      padding: 8px 16px;
+      background: #e8f8ee;
+      border: 1.5px dashed #25D366;
+      border-radius: 8px;
+      color: #128C7E;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .file-btn:hover { background: #d0f0db; }
+    .file-count {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .info-box {
+      background: #e8f8ee;
+      border-left: 4px solid #25D366;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #1a1a1a;
+    }
+    .info-box strong { color: #075e54; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 10px 6px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .stat-value { font-size: 1.3rem; font-weight: 700; }
+    .stat-value.green { color: #25D366; }
+    .stat-value.red { color: #e74c3c; }
+    .stat-value.gray { color: #999; }
+    .stat-value.blue { color: #128C7E; }
+    .stat-label { font-size: 0.75rem; color: #888; margin-top: 2px; }
+    .progress-wrap {
+      width: 100%;
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #25D366, #128C7E);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .send-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .send-controls select {
+      width: auto;
+      min-width: 80px;
+    }
+    .log-table-wrap {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 14px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .log-table th {
+      background: #f8f9fa;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      border-bottom: 2px solid #eee;
+    }
+    .log-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .log-table tr:hover td { background: #fafafa; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .badge-sent { background: #e8f8ee; color: #1da851; }
+    .badge-failed { background: #fde8e8; color: #e74c3c; }
+    .badge-sending { background: #fff8e1; color: #f39c12; }
+    .badge-skipped { background: #f0f0f0; color: #888; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .link-preview {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafafa;
+      transition: opacity 0.3s;
+    }
+    .link-preview-img-wrap {
+      flex-shrink: 0;
+      width: 120px;
+      height: 120px;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .link-preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .link-preview-body {
+      flex: 1;
+      padding: 10px 12px 10px 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+    .link-preview-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .link-preview-desc {
+      font-size: 0.8rem;
+      color: #666;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .link-preview-url {
+      font-size: 0.75rem;
+      color: #999;
+      text-transform: lowercase;
+    }
+    .link-preview-loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📱 WhatsApp AI Bulk Sender</h1>
+
+    <!-- CARD 1 - Connect WhatsApp -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🔗 Connect WhatsApp</span>
+        <span>
+          <span class="status-dot dot-gray" id="statusDot"></span>
+          <span class="status-text" id="statusText">Disconnected</span>
+        </span>
+      </div>
+      <button class="btn btn-green" id="connectBtn" onclick="connectWhatsApp()">
+        Connect WhatsApp
+      </button>
+      <button class="btn btn-red" id="reconnectBtn" onclick="reconnectWhatsApp()" style="display:none;">
+        🔄 Session Expired — Click to Reconnect
+      </button>
+      <div id="qrContainer" style="display:none; text-align:center; margin-top:16px;">
+        <p style="font-size:0.85rem; color:#666; margin-bottom:12px;">Scan this QR code with your WhatsApp mobile app</p>
+        <img id="qrImage" src="" alt="QR Code" style="width:220px; height:220px; border-radius:8px; border:2px solid #e8f8ee;" />
+        <p style="font-size:0.75rem; color:#999; margin-top:8px;">QR refreshes automatically — scan to connect</p>
+      </div>
+    </div>
+
+    <!-- CARD 2 - Upload Numbers -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 Upload Numbers</span>
+        <span class="file-count" id="numCount">0 numbers loaded</span>
+      </div>
+      <label class="file-label">
+        <span class="file-btn">📁 Choose .txt or .csv file</span>
+        <input type="file" id="fileInput" accept=".txt,.csv" onchange="loadNumbers(event)" />
+      </label>
+    </div>
+
+    <!-- CARD 3 - Write Message -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">✏️ Write Message</span>
+      </div>
+      <textarea id="messageInput" placeholder="Type your message here... e.g. Hello! Check out our new offer at https://example.com"></textarea>
+      <!-- Link Preview -->
+      <div id="linkPreview" class="link-preview" style="display:none;">
+        <div class="link-preview-img-wrap">
+          <img id="previewImage" src="" alt="Preview" class="link-preview-img" />
+        </div>
+        <div class="link-preview-body">
+          <div class="link-preview-title" id="previewTitle"></div>
+          <div class="link-preview-desc" id="previewDesc"></div>
+          <div class="link-preview-url" id="previewSite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4 - AI Prepare -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🤖 AI Prepare</span>
+      </div>
+      <button class="btn btn-blue" id="prepareBtn" onclick="prepareSend()">
+        Validate &amp; Get Strategy
+      </button>
+      <div id="aiInfo" class="info-box" style="display:none;"></div>
+    </div>
+
+    <!-- CARD 5 - Send -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📤 Send Messages</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value blue" id="statTotal">0</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value gray" id="statPending">0</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value green" id="statSent">0</div>
+          <div class="stat-label">Sent</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value red" id="statFailed">0</div>
+          <div class="stat-label">Failed</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" style="color:#f39c12;" id="statSkipped">0</div>
+          <div class="stat-label">Skipped</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="send-controls">
+        <select id="delaySelect">
+          <option value="2000" selected>2s delay</option>
+          <option value="4000">4s delay</option>
+          <option value="6000">6s delay</option>
+          <option value="8000">8s delay</option>
+        </select>
+        <button class="btn btn-green" id="startBtn" onclick="startSending()">▶ Start Sending</button>
+        <button class="btn btn-red" id="stopBtn" onclick="stopSending()" style="display:none;">⏹ Stop</button>
+        <button class="btn btn-outline btn-sm" onclick="downloadReport()">📥 Download Report (MD)</button>
+      </div>
+      <div class="log-table-wrap">
+        <table class="log-table">
+          <thead><tr><th>Number</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- State ---
+    let numbers = [];
+    let validNumbers = [];
+    let invalidNumbers = [];
+    let eventSource = null;
+    let abortController = null;
+    let isSending = false;
+    let pollInterval = null;
+
+    // --- CARD 1: Connect ---
+    async function connectWhatsApp() {
+      const btn = document.getElementById('connectBtn');
+      const qrContainer = document.getElementById('qrContainer');
+      btn.disabled = true;
+      btn.textContent = 'Starting...';
+      try {
+        const res = await fetch('/api/init', { method: 'POST' });
+        const data = await res.json();
+        if (data.success && data.connected) {
+          updateStatus(true);
+          btn.style.display = 'none';
+        } else if (data.success) {
+          btn.textContent = 'Scan QR Code';
+          qrContainer.style.display = 'block';
+          refreshQR();
+        } else {
+          alert('Failed: ' + (data.error || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = 'Connect WhatsApp';
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Connect WhatsApp';
+      }
+    }
+
+    async function refreshQR() {
+      try {
+        const res = await fetch('/api/qr');
+        const data = await res.json();
+        if (data.connected) {
+          document.getElementById('qrContainer').style.display = 'none';
+          document.getElementById('connectBtn').style.display = 'none';
+          document.getElementById('reconnectBtn').style.display = 'none';
+          updateStatus(true);
+        } else if (data.qr) {
+          document.getElementById('qrImage').src = data.qr;
+        }
+      } catch (_) {}
+    }
+
+    async function reconnectWhatsApp() {
+      const btn = document.getElementById('reconnectBtn');
+      btn.disabled = true;
+      btn.textContent = 'Reconnecting...';
+      try {
+        // Destroy old client and start fresh
+        await fetch('/api/init', { method: 'POST' });
+        // Check if we connected (session restored) or need QR
+        setTimeout(async () => {
+          const res = await fetch('/api/qr');
+          const data = await res.json();
+          if (data.connected) {
+            btn.style.display = 'none';
+            updateStatus(true);
+          } else {
+            // Show QR container — change connectBtn text instead of hiding it
+            // so pollStatus doesn't re-show the reconnect button
+            btn.style.display = 'none';
+            document.getElementById('connectBtn').textContent = 'Scan QR Code';
+            document.getElementById('connectBtn').style.display = 'inline-flex';
+            document.getElementById('qrContainer').style.display = 'block';
+            refreshQR();
+          }
+          btn.disabled = false;
+        }, 2000);
+      } catch (err) {
+        alert('Reconnect error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = '🔄 Session Expired — Click to Reconnect';
+      }
+    }
+
+    function updateStatus(connected) {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      dot.className = 'status-dot ' + (connected ? 'dot-green' : 'dot-gray');
+      text.textContent = connected ? 'Connected' : 'Disconnected';
+    }
+
+    async function pollStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        updateStatus(data.connected);
+        if (data.connected) {
+          document.getElementById('qrContainer').style.display = 'none';
+          document.getElementById('connectBtn').style.display = 'none';
+          document.getElementById('reconnectBtn').style.display = 'none';
+        } else {
+          // Show reconnect button if we were previously connected but now lost
+          const connectBtn = document.getElementById('connectBtn');
+          if (connectBtn.style.display === 'none') {
+            document.getElementById('reconnectBtn').style.display = 'inline-flex';
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Poll status every 3 seconds, and refresh QR every 10s while waiting
+    pollInterval = setInterval(() => {
+      pollStatus();
+      const qrContainer = document.getElementById('qrContainer');
+      if (qrContainer.style.display === 'block') {
+        refreshQR();
+      }
+    }, 3000);
+    pollStatus();
+
+    // Auto-connect on page load — if saved session exists, client will restore
+    setTimeout(async () => {
+      const statusRes = await fetch('/api/status');
+      const statusData = await statusRes.json();
+      if (!statusData.connected) {
+        connectWhatsApp();
+      }
+    }, 1000);
+
+    // --- CARD 2: Upload Numbers ---
+    function loadNumbers(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const raw = text.split(/[\n,]+/);
+        numbers = raw
+          .map(n => n.replace(/\D/g, ''))
+          .filter(n => n.length >= 7);
+        document.getElementById('numCount').textContent = numbers.length + ' numbers loaded';
+        document.getElementById('statTotal').textContent = numbers.length;
+        document.getElementById('statPending').textContent = numbers.length;
+        // Clear previous AI info and restart AI Prepare when file is uploaded
+        document.getElementById('aiInfo').style.display = 'none';
+        document.getElementById('prepareBtn').disabled = false;
+        document.getElementById('prepareBtn').textContent = 'Validate & Get Strategy';
+        if (numbers.length > 0) {
+          const msg = document.getElementById('messageInput').value.trim();
+          if (msg) {
+            setTimeout(prepareSend, 500);
+          }
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // --- CARD 3: Remember last message + Link preview ---
+    const messageInput = document.getElementById('messageInput');
+    // Load saved message from localStorage
+    const savedMsg = localStorage.getItem('wa-last-message');
+    if (savedMsg) {
+      messageInput.value = savedMsg;
+    }
+    // Save message to localStorage on input
+    messageInput.addEventListener('input', function() {
+      localStorage.setItem('wa-last-message', this.value);
+      debouncedCheckPreview();
+    });
+
+    // --- Link Preview ---
+    let previewTimer = null;
+    let lastPreviewUrl = '';
+
+    function extractURL(text) {
+      const urlRegex = /(https?:\/\/[^\s<"')\]>]+)/gi;
+      const matches = text.match(urlRegex);
+      if (!matches) return null;
+      // Trim trailing punctuation that's not part of the URL
+      let url = matches[0];
+      url = url.replace(/[.,!?;:)]+$/, '');
+      // Ensure it has at least a dot (basic validity check)
+      try {
+        const parsed = new URL(url);
+        if (!parsed.hostname.includes('.')) return null;
+        return url;
+      } catch (_) { return null; }
+    }
+
+    async function fetchLinkPreview(url) {
+      const container = document.getElementById('linkPreview');
+      const img = document.getElementById('previewImage');
+      const title = document.getElementById('previewTitle');
+      const desc = document.getElementById('previewDesc');
+      const site = document.getElementById('previewSite');
+
+      container.classList.add('link-preview-loading');
+
+      try {
+        const res = await fetch('/api/preview?url=' + encodeURIComponent(url));
+        const data = await res.json();
+
+        // Stale response guard — if URL changed while we were fetching, discard
+        if (url !== lastPreviewUrl) return;
+
+        if (data.error || (!data.title && !data.image)) {
+          container.style.display = 'none';
+          return;
+        }
+
+        img.src = data.image || '';
+        img.style.display = data.image ? 'block' : 'none';
+        img.onerror = function() { this.style.display = 'none'; };
+        title.textContent = data.title || '';
+        desc.textContent = data.description || '';
+        try {
+          site.textContent = data.siteName || new URL(url).hostname;
+        } catch (_) {
+          site.textContent = data.siteName || url;
+        }
+        container.style.display = 'flex';
+      } catch (err) {
+        container.style.display = 'none';
+      } finally {
+        container.classList.remove('link-preview-loading');
+      }
+    }
+
+    function checkPreview() {
+      const text = messageInput.value.trim();
+      const url = extractURL(text);
+
+      if (!url) {
+        document.getElementById('linkPreview').style.display = 'none';
+        lastPreviewUrl = '';
+        return;
+      }
+
+      if (url !== lastPreviewUrl) {
+        lastPreviewUrl = url;
+        // Show a quick skeleton while loading
+        const container = document.getElementById('linkPreview');
+        container.style.display = 'flex';
+        document.getElementById('previewTitle').textContent = 'Loading preview...';
+        document.getElementById('previewDesc').textContent = '';
+        document.getElementById('previewImage').style.display = 'none';
+        try {
+          document.getElementById('previewSite').textContent = new URL(url).hostname;
+        } catch (_) {
+          document.getElementById('previewSite').textContent = url;
+        }
+        fetchLinkPreview(url);
+      }
+    }
+
+    function debouncedCheckPreview() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(checkPreview, 600);
+    }
+
+    // Check for preview on page load (if saved message has URL)
+    setTimeout(checkPreview, 800);
+
+    // --- CARD 4: AI Prepare ---
+    async function prepareSend() {
+      const btn = document.getElementById('prepareBtn');
+      const msg = document.getElementById('messageInput').value.trim();
+      if (numbers.length === 0) { alert('Please upload numbers first.'); return; }
+      if (!msg) { alert('Please write a message.'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      try {
+        const res = await fetch('/api/prepare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ numbers, message: msg }),
+        });
+        const data = await res.json();
+        // Store valid and invalid numbers separately
+        // validation.valid/invalid are arrays of phone number strings, not objects
+        validNumbers = data.validation.valid;
+        invalidNumbers = data.validation.invalid;
+        document.getElementById('statSkipped').textContent = invalidNumbers.length;
+        document.getElementById('statPending').textContent = validNumbers.length;
+
+        const info = document.getElementById('aiInfo');
+        info.style.display = 'block';
+        info.innerHTML = `
+          <strong>✅ Validation:</strong> ${data.validation.valid.length} valid, ${data.validation.invalid.length} invalid<br>
+          <strong>📊 Strategy:</strong> Delay ${data.strategy.delayMs}ms | Batch ${data.strategy.batchSize} | Pause ${(data.strategy.batchPauseMs / 1000).toFixed(0)}s<br>
+          <strong>💡 Advice:</strong> ${data.strategy.advice}<br>
+          <small>${data.validation.report}</small>
+        `;
+        // Set delay to AI recommended value
+        const delaySelect = document.getElementById('delaySelect');
+        const aiDelay = data.strategy.delayMs;
+        for (let opt of delaySelect.options) {
+          if (parseInt(opt.value) === aiDelay) {
+            delaySelect.value = opt.value;
+            break;
+          }
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+      btn.disabled = false;
+      btn.textContent = 'Validate & Get Strategy';
+    }
+
+    // --- CARD 5: Send ---
+    async function startSending() {
+      if (numbers.length === 0) { alert('No numbers loaded.'); return; }
+      if (isSending) return;
+      isSending = true;
+
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('stopBtn').style.display = 'inline-flex';
+      document.getElementById('logBody').innerHTML = '';
+      document.getElementById('statSent').textContent = '0';
+      document.getElementById('statFailed').textContent = '0';
+      document.getElementById('statSkipped').textContent = '0';
+      document.getElementById('statPending').textContent = validNumbers.length;
+      document.getElementById('progressBar').style.width = '0%';
+
+      const delayMs = parseInt(document.getElementById('delaySelect').value);
+      const msg = document.getElementById('messageInput').value.trim();
+
+      try {
+        // Step 1: POST the send config (avoids URL length limits)
+        const postRes = await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            valid: validNumbers,
+            invalid: invalidNumbers,
+            message: msg,
+            delayMs,
+          }),
+        });
+        await postRes.json();
+        if (!postRes.ok) { alert('Failed to start send job'); stopSending(); return; }
+
+        // Step 2: Open EventSource to stream results
+        eventSource = new EventSource('/api/send/stream');
+        eventSource.onmessage = function(e) {
+          const data = JSON.parse(e.data);
+          handleSSEEvent(data);
+        };
+        eventSource.onerror = function() {
+          // Stream ended or error
+          stopSending();
+        };
+      } catch (err) {
+        console.error('Send error:', err);
+        stopSending();
+      }
+    }
+
+    function stopSending() {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+      isSending = false;
+      document.getElementById('startBtn').style.display = 'inline-flex';
+      document.getElementById('stopBtn').style.display = 'none';
+    }
+
+    function handleSSEEvent(data) {
+      const logBody = document.getElementById('logBody');
+      const statSent = document.getElementById('statSent');
+      const statFailed = document.getElementById('statFailed');
+      const statPending = document.getElementById('statPending');
+      const progressBar = document.getElementById('progressBar');
+
+      if (data.type === 'sending') {
+        const row = document.createElement('tr');
+        row.id = 'row-' + data.index;
+        row.innerHTML = `
+          <td>${data.number}</td>
+          <td><span class="badge badge-sending">sending</span></td>
+          <td>${new Date().toLocaleTimeString()}</td>
+        `;
+        logBody.appendChild(row);
+        // Scroll to bottom
+        logBody.parentElement.scrollTop = logBody.parentElement.scrollHeight;
+      }
+
+      if (data.type === 'result') {
+        const row = document.getElementById('row-' + data.index);
+        if (row) {
+          const badge = data.status === 'sent' ? 'badge-sent' : data.status === 'skipped' ? 'badge-skipped' : 'badge-failed';
+          row.innerHTML = `
+            <td>${data.number}</td>
+            <td><span class="badge ${badge}">${data.status}</span></td>
+            <td>${data.time}</td>
+          `;
+        }
+        // Update stats
+        const sent = parseInt(statSent.textContent);
+        const failed = parseInt(statFailed.textContent);
+        const skipped = parseInt(document.getElementById('statSkipped').textContent);
+        if (data.status === 'sent') statSent.textContent = sent + 1;
+        else if (data.status === 'skipped') {
+          document.getElementById('statSkipped').textContent = skipped + 1;
+        } else statFailed.textContent = failed + 1;
+        const totalSent = parseInt(statSent.textContent);
+        const totalFailed = parseInt(statFailed.textContent);
+        const totalSkipped = parseInt(document.getElementById('statSkipped').textContent);
+        statPending.textContent = numbers.length - totalSent - totalFailed - totalSkipped;
+        const progress = ((totalSent + totalFailed + totalSkipped) / numbers.length) * 100;
+        progressBar.style.width = Math.min(progress, 100) + '%';
+      }
+
+      if (data.type === 'done') {
+        stopSending();
+        statSent.textContent = data.sent;
+        statFailed.textContent = data.failed;
+        document.getElementById('statSkipped').textContent = data.skipped || 0;
+        statPending.textContent = '0';
+        progressBar.style.width = '100%';
+      }
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+      if (pollInterval) clearInterval(pollInterval);
+      if (eventSource) eventSource.close();
+      if (abortController) abortController.abort();
+    });
+
+    function downloadReport() {
+      window.open('/api/log/md', '_blank');
+    }
+  </script>
+</body>
+</html>
