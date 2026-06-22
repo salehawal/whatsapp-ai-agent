@@ -70,10 +70,10 @@ On subsequent starts, the session is restored automatically — no QR scan neede
 Upload a `.txt` or `.csv` file with phone numbers. Supported formats:
 
 ```
-+201234567890
-+209876543210
-00201123456789
-01123456789
++201230000000
++209870000000
+00201120000000
+01120000000
 ```
 
 - Each number on a separate line (or comma-separated)
