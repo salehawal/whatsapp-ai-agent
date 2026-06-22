@@ -1,14 +1,14 @@
-# 🤖 WhatsApp AI Agent
+# 🤖 WhatsApp Bulk Sender
 
-An intelligent bulk WhatsApp messaging tool powered by AI. Upload your contact list, write your message, and let the AI validate numbers, optimize sending strategy, and deliver messages through WhatsApp Web — with a live progress dashboard and detailed Markdown reports.
+Send bulk WhatsApp messages through your real WhatsApp account with a live progress dashboard and detailed Markdown reports.
 
 ---
 
 ## Features
 
 - **📱 WhatsApp Web Integration** — Uses `whatsapp-web.js` to send messages through your real WhatsApp account. Secure session persistence via QR scan (no credentials stored).
-- **🤖 AI-Powered Validation** — Phone numbers are validated and formatted by Claude AI (Anthropic). Invalid numbers are automatically skipped.
-- **📊 Smart Send Strategy** — AI recommends optimal delay, batch size, and pause timing based on your list size — preventing rate-limiting.
+- **🔢 Phone Number Validation** — Phone numbers are automatically cleaned and validated (strips non-digits, assumes Egypt +20). Invalid numbers are skipped.
+- **⏱️ Smart Send Strategy** — Automatically recommends safe delays and batch sizes based on your list size to prevent rate-limiting.
 - **🔗 Link Preview** — Automatically detects URLs in your message and loads their Open Graph preview (title, description, image) in real-time.
 - **⏭️ Skip Invalid Numbers** — Invalid phone numbers are skipped automatically and logged in the report. Only valid numbers are sent to.
 - **📈 Live Dashboard** — Real-time progress bar, stats (Total / Pending / Sent / Failed / Skipped), and per-number log table.
@@ -21,8 +21,7 @@ An intelligent bulk WhatsApp messaging tool powered by AI. Upload your contact l
 ## Requirements
 
 - **Node.js** 18+
-- **Anthropic API Key** — for AI validation and strategy (get one at [console.anthropic.com](https://console.anthropic.com))
-- **Google Chrome or Chromium** (auto-detected on Linux, macOS, Windows; falls back to bundled Puppeteer Chromium)
+- **Google Chrome or Chromium** (auto-detected on Linux, macOS, Windows)
 
 ---
 
@@ -36,16 +35,7 @@ cd whatsapp-ai-agent
 npm install
 ```
 
-### 2. Set up environment
-
-Create a `.env` file in the project root:
-
-```env
-ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
-PORT=3000
-```
-
-### 3. Start the server
+### 2. Start the server
 
 ```bash
 npm run dev
@@ -57,7 +47,7 @@ Or without auto-restart:
 npm start
 ```
 
-### 4. Open the app
+### 3. Open the app
 
 Navigate to [http://localhost:3000](http://localhost:3000)
 
@@ -89,7 +79,7 @@ Upload a `.txt` or `.csv` file with phone numbers. Supported formats:
 - Each number on a separate line (or comma-separated)
 - Non-digit characters are stripped automatically
 - Numbers with fewer than 7 digits are filtered out
-- The AI will validate and format each number to E.164 international format
+- Numbers are automatically formatted to E.164 international format
 
 ### Step 3: Write Your Message
 
@@ -97,16 +87,15 @@ Type your message in the text area. If your message contains a URL, a **live lin
 
 The message is saved to your browser's local storage, so it persists across page refreshes.
 
-### Step 4: AI Prepare
+### Step 4: Validate & Get Strategy
 
-Click **"Validate & Get Strategy"** (or it triggers automatically when you upload numbers with a message ready). The AI will:
+Click **"Validate & Get Strategy"** (or it triggers automatically when you upload numbers with a message ready). The app will:
 
 1. ✅ Clean and validate every phone number
 2. 📊 Recommend the safest sending strategy (delay, batch size, pause)
-3. 💡 Provide safety advice
-4. ⏭️ Identify invalid numbers to skip
+3. ⏭️ Identify invalid numbers to skip
 
-The results appear in the AI Info box, and the delay dropdown is automatically set to the AI-recommended value.
+The results appear in the info box, and the delay dropdown is automatically set to the recommended value.
 
 ### Step 5: Send Messages
 
@@ -141,8 +130,6 @@ Click **"📥 Download Report (MD)"** to get a Markdown report with:
 | 3 | 0099999999999  | ⏭️ Skipped  | 6:00 PM  | Invalid format   |
 ```
 
-The report is readable by both humans and AI agents.
-
 ---
 
 ## Project Structure
@@ -151,11 +138,10 @@ The report is readable by both humans and AI agents.
 whatsapp-ai-agent/
 ├── server.js           # Express server — API routes, SSE streaming, OG preview
 ├── sender.js           # WhatsApp client — init, QR auth, sendMessage
-├── agent.js            # AI agent — phone validation, send strategy, personalization
+├── agent.js            # Phone validation and send strategy logic
 ├── public/
 │   └── index.html      # Frontend — dashboard UI, live progress, link preview
 ├── package.json
-├── .env                # Your API keys (not committed)
 └── README.md
 ```
 
@@ -168,8 +154,8 @@ whatsapp-ai-agent/
 │  (UI)    │  ◄── SSE events ────   │  Server      │
 │          │                        │              │
 │          │  POST /api/prepare     │  ┌─────────┐ │
-│          │  ──────────────────►   │  │ Claude  │ │
-│          │                        │  │  AI     │ │
+│          │  ──────────────────►   │  │Validator│ │
+│          │                        │  │+Strategy│ │
 │          │  GET /api/log/md       │  └─────────┘ │
 │          │  ◄── MD report ─────   │              │
 └──────────┘                        │  ┌─────────┐ │
@@ -186,7 +172,7 @@ whatsapp-ai-agent/
 | `POST` | `/api/init` | Initialize WhatsApp session (QR or restore) |
 | `GET` | `/api/qr` | Get current QR code as base64 data URL |
 | `GET` | `/api/status` | Check if WhatsApp is connected |
-| `POST` | `/api/prepare` | Validate numbers + get AI strategy |
+| `POST` | `/api/prepare` | Validate numbers + get send strategy |
 | `POST` | `/api/send` | Submit send job config |
 | `GET` | `/api/send/stream` | SSE stream of send progress |
 | `GET` | `/api/log` | Get send log as JSON |
@@ -222,7 +208,6 @@ whatsapp-ai-agent/
 - **Runtime:** Node.js
 - **Web Framework:** Express
 - **WhatsApp:** whatsapp-web.js (v1.34.7)
-- **AI:** Anthropic Claude (claude-sonnet-4-20250514)
 - **Browser Automation:** Puppeteer (via whatsapp-web.js)
 - **Frontend:** Vanilla HTML/CSS/JS (no frameworks)
 
@@ -231,6 +216,6 @@ whatsapp-ai-agent/
 ## Notes
 
 - **WhatsApp Web Policy:** This tool automates WhatsApp Web interactions. Use responsibly and in compliance with WhatsApp's Terms of Service.
-- **Rate Limiting:** The AI strategy recommends safe delays. Sending too fast may trigger WhatsApp rate limits or temporary blocks.
+- **Rate Limiting:** Use safe delays. Sending too fast may trigger WhatsApp rate limits or temporary blocks.
 - **Session Expiry:** WhatsApp sessions expire after a period of inactivity. If disconnected, click the reconnect button or re-scan the QR code.
 - **Single User:** The app is designed for single-user use on a local machine. Not tested for multi-user or production deployments.
