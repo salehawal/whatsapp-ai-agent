@@ -1,6 +1,7 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const fs = require('fs');
+const path = require('path');
 
 let client = null;
 let isReady = false;
@@ -39,9 +40,22 @@ function detectChromePath() {
 
 const CHROME_PATH = detectChromePath();
 
+/** Ensure runtime directories exist (whatsapp-web.js creates its own, but we ensure the structure is ready) */
+function ensureRuntimeDirs() {
+  const dirs = [
+    path.join(__dirname, '.wwebjs_auth'),
+    path.join(__dirname, '.wwebjs_cache'),
+  ];
+  for (const dir of dirs) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  }
+}
+
 /** Remove stale Chrome lock files from whatsapp-web.js session directory */
 function cleanStaleLocks() {
-  const dir = './.wwebjs_auth';
+  const dir = path.join(__dirname, '.wwebjs_auth');
   if (!fs.existsSync(dir)) return;
   const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie', 'LOCK'];
   const walk = (p) => {
@@ -61,6 +75,7 @@ function cleanStaleLocks() {
 }
 
 async function initBrowser() {
+  ensureRuntimeDirs();
   cleanStaleLocks();
 
   if (client) {
